@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/auth');
 const sitesRoutes = require('./routes/sites');
 const serverRoutes = require('./routes/server');
+const importRoutes = require('./routes/import');
 
 const app = express();
 
@@ -32,6 +33,7 @@ const authLimiter = rateLimit({
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/sites', sitesRoutes);
 app.use('/api/server', serverRoutes);
+app.use('/api/import', importRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

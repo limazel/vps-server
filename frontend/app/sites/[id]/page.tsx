@@ -11,7 +11,8 @@ import { api } from '@/lib/api';
 interface Site {
   id: number; name: string; domain: string;
   repoUrl: string; branch: string; appType: string;
-  port: number; status: string; createdAt: string; updatedAt: string;
+  port: number; status: string; runType: string; pm2Name: string | null;
+  createdAt: string; updatedAt: string;
 }
 
 interface LogResult { lines: string[]; warning?: string; }
@@ -198,14 +199,21 @@ export default function SiteDetailPage() {
 
           {/* Actions */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-6">
-            <h2 className="text-sm font-medium text-zinc-400 mb-4">Actions</h2>
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="text-sm font-medium text-zinc-400">Actions</h2>
+              {site.runType === 'pm2' && (
+                <span className="text-xs bg-purple-500/15 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded">PM2</span>
+              )}
+            </div>
             <div className="flex flex-wrap gap-2">
-              <ActionBtn
-                label="Deploy"
-                variant="success"
-                loading={busy.deploy}
-                onClick={() => action('deploy', () => api.post(`/api/sites/${id}/deploy`))}
-              />
+              {site.runType !== 'pm2' && (
+                <ActionBtn
+                  label="Deploy"
+                  variant="success"
+                  loading={busy.deploy}
+                  onClick={() => action('deploy', () => api.post(`/api/sites/${id}/deploy`))}
+                />
+              )}
               <ActionBtn
                 label="Nginx Config"
                 loading={busy.nginx}
@@ -217,17 +225,24 @@ export default function SiteDetailPage() {
                 onClick={() => action('ssl', () => api.post(`/api/sites/${id}/ssl`))}
               />
               <ActionBtn
+                label="Start"
+                variant="success"
+                loading={busy.start}
+                disabled={site.status === 'running'}
+                onClick={() => action('start', () => api.post(`/api/sites/${id}/start`))}
+              />
+              <ActionBtn
                 label="Stop"
                 variant="danger"
                 loading={busy.stop}
                 disabled={site.status === 'stopped'}
-                onClick={() => action('stop', () => api.patch(`/api/sites/${id}`, { status: 'stopped' }))}
+                onClick={() => action('stop', () => api.post(`/api/sites/${id}/stop`))}
               />
               <ActionBtn
                 label="Restart"
                 variant="warning"
                 loading={busy.restart}
-                onClick={() => action('restart', () => api.post(`/api/sites/${id}/deploy`))}
+                onClick={() => action('restart', () => api.post(`/api/sites/${id}/restart`))}
               />
             </div>
           </div>

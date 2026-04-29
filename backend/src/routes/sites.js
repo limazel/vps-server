@@ -5,6 +5,7 @@ const deployService = require('../services/deploy.service');
 const nginxService  = require('../services/nginx.service');
 const sslService    = require('../services/ssl.service');
 const logService    = require('../services/log.service');
+const pm2Service    = require('../services/pm2.service');
 
 const APP_TYPES = ['nextjs', 'react', 'node', 'static'];
 const STATUSES  = ['pending', 'deploying', 'running', 'stopped', 'failed'];
@@ -216,6 +217,40 @@ router.post('/:id/ssl', async (req, res) => {
     res.status(status).json({ error: err.message });
   }
 });
+
+// --- container/pm2 control ---
+
+async function controlSite(site, action) {
+  if (site.runType === 'pm2') {
+    await pm2Service.control(site.pm2Name || site.domain, action);
+  } else {
+    const { spawn } = require('child_process');
+    await new Promise((resolve, reject) => {
+      const proc = spawn('docker', [action, `site-${site.id}`], { stdio: 'pipe', shell: false });
+      proc.on('error', reject);
+      proc.on('close', (code) => code === 0 ? resolve() : reject(new Error(`docker ${action} failed`)));
+    });
+  }
+}
+
+for (const action of ['start', 'stop', 'restart']) {
+  router.post(`/:id/${action}`, async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return fail(res, 400, 'Invalid id');
+
+    const site = await prisma.site.findUnique({ where: { id } });
+    if (!site) return fail(res, 404, 'Site not found');
+
+    try {
+      await controlSite(site, action);
+      const status = action === 'stop' ? 'stopped' : 'running';
+      await prisma.site.update({ where: { id }, data: { status } });
+      res.json({ message: `${action} successful` });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+}
 
 // --- log endpoints ---
 

@@ -18,11 +18,13 @@ model Site {
   id        Int      @id @default(autoincrement())
   name      String
   domain    String   @unique
-  repoUrl   String
+  repoUrl   String?
   branch    String   @default("main")
   appType   String   @default("node")
   port      Int?     @unique
   status    String   @default("pending")
+  runType   String   @default("docker")
+  pm2Name   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deploys   Deploy[]
