@@ -1,0 +1,27 @@
+# env
+.env
+.env.local
+
+# deps
+node_modules/
+
+# build
+.next/
+dist/
+build/
+
+# db
+*.db
+*.db-journal
+backend/data/
+
+# logs
+*.log
+
+# os
+.DS_Store
+Thumbs.db
+
+# ide
+.vscode/
+.idea/
